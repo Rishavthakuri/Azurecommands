@@ -1,0 +1,158 @@
+
+
+*///////////////  Azure CLoud shell commands ////************
+
+// Connect to Azure account
+Connect-AzAccount
+
+//Get-AzSubscription
+Set-AzContext -Subscription 'b6459a5f-9bd5-4846-86f0-d1532f8b9fd8'
+
+//Get a list of all resource groups
+Get-AzResourceGroup
+
+//Get-AzResourceGroup to the Format-Table
+Get-AzResourceGroup | Format-Table
+
+//Create Resource groups
+New-AzResourceGroup -Name <name> -Location <location>
+
+// Creating Azure Virtual Machine
+New-AzVm
+       -ResourceGroupName <resource group name>
+       -Name <machine name>
+       -Credential <credentials object>
+       -Location <location>
+       -Image <image name>
+
+//creating Virtual machine
+New-AzVm -ResourceGroupName learn-5601bc13-d124-409a-826b-16bfa72fd4d6 -Name "testvm-eus-01" 
+-Credential (Get-Credential) -Location "eastus" -Image Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest -OpenPorts 22 -PublicIpAddressName "testvm-eus-01"
+
+//See VM hardware profile
+$vm.HardwareProfile
+
+// get information on one of the disks, run the following command:
+$vm.StorageProfile.OsDisk
+
+
+//You can even pass the VM object into other cmdlets. 
+For example, running the following command shows you all available sizes for your VM:
+$vm | Get-AzVMSize
+
+//run the following command to get your public IP address:
+Get-AzPublicIpAddress -ResourceGroupName learn-5601bc13-d124-409a-826b-16bfa72fd4d6 -Name 
+"testvm-eus-01"
+
+//shutdown VM
+Stop-AzVM -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName
+
+//Remove VM
+Remove-AzVM -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName
+
+//Run this command to list all the resources in your resource group:
+Get-AzResource -ResourceGroupName $vm.ResourceGroupName | Format-Table
+
+//Delete the network interface:
+Get-AzDisk -ResourceGroupName $vm.ResourceGroupName -DiskName $vm.StorageProfile.OSDisk.Name | Remove-AzDisk -Force
+
+//Delete the managed OS disks:
+Get-AzDisk -ResourceGroupName $vm.ResourceGroupName -DiskName $vm.StorageProfile.OSDisk.Name | Remove-AzDisk -Force
+
+//Delete Virtual network
+Get-AzVirtualNetwork -ResourceGroupName $vm.ResourceGroupName | Remove-AzVirtualNetwork -Force
+
+//Delete Network Security group
+Get-AzNetworkSecurityGroup -ResourceGroupName $vm.ResourceGroupName | Remove-AzNetworkSecurityGroup -Force
+
+//Delete  Public IP
+Get-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName | Remove-AzPublicIpAddress -Force
+
+
+
+//Write a script to create virtual machines
+
+
+1)create ps1 file in the cloud shell
+
+     cd $HOME\clouddrive
+     touch "./ConferenceDailyReset.ps1"
+     code "./ConferenceDailyReset.ps1"
+
+2) write the following code
+
+param([string]$resourceGroup)
+
+$adminCredential = Get-Credential -Message "Enter a username and password for the VM administrator."
+
+For ($i = 1; $i -le 3; $i++)
+{
+    $vmName = "ConferenceDemo" + $i
+    Write-Host "Creating VM: " $vmName
+    New-AzVm -ResourceGroupName $resourceGroup -Name $vmName -Credential $adminCredential -Image Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest
+}
+
+// See the virtual machines created
+Get-AzResource -ResourceType Microsoft.Compute/virtualMachines
+
+
+
+*////////////// Azure CloudShell Commands Ends Here */////////////
+
+
+############### Azure CLi commands###############
+
+// login to azure account
+
+az login
+
+// Creating the resource group
+
+Syntax: az group create --name <name> --location <location>
+
+// list the resource group
+
+az group list
+
+//az group list --output table
+
+
+//Create App service plan
+az appservice plan create --name $AZURE_APP_PLAN --resource-group $RESOURCE_GROUP --location $AZURE_REGION --sku FREE
+
+
+//Verify the service plan was created
+az appservice plan list --output table
+
+//Create Webapp
+az webapp create --name $AZURE_WEB_APP --resource-group $RESOURCE_GROUP --plan $AZURE_APP_PLAN
+
+//Verify the app was created
+az webapp list --output table
+
+
+//Deploy code from github to the Azure web app
+az webapp deployment source config --name $AZURE_WEB_APP --resource-group $RESOURCE_GROUP --repo-url "https://github.com/Azure-Samples/php-docs-hello-world" --branch master --manual-integration
+
+//Once it's deployed, hit your site again with a browser or CURL:
+curl $AZURE_WEB_APP.azurewebsites.net
+
+
+//////ARM - Azure Resource Manager //////////////
+
+$templateFile="azuredeploy.json"
+$today=Get-Date -Format "MM-dd-yyyy"
+$deploymentName="blanktemplate-"+"$today"
+New-AzResourceGroupDeployment `
+  -Name $deploymentName `
+  -TemplateFile $templateFile
+
+
+  //depoy the update ARM template
+  $templateFile="azuredeploy.json"
+$today=Get-Date -Format "MM-dd-yyyy"
+$deploymentName="addstorage-"+"$today"
+New-AzResourceGroupDeployment `
+  -Name $deploymentName `
+  -TemplateFile $templateFile
+   /
